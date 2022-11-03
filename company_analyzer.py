@@ -48,6 +48,7 @@ class CompanyAnalyzer():
     def PrintCompanyMetrics(self) -> str:
         #TODO: show 1yr, 2yr, 3yr cumulative growth and average change
         #TODO: show compare present value with market price
+        #TODO: accept a different avg fcf growth rate
         pass
 
 
