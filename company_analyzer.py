@@ -41,7 +41,7 @@ class CompanyAnalyzer():
         pass
 
 
-    def LoadCompanyFromFile(self, fd: str) -> bool:
+    def LoadCompanyFromTextFile(self, fd: str) -> bool:
         pass
 
 
@@ -49,6 +49,7 @@ class CompanyAnalyzer():
         #TODO: show 1yr, 2yr, 3yr cumulative growth and average change
         #TODO: show compare present value with market price
         #TODO: accept a different avg fcf growth rate
+        #TODO: how to calculate yoy growth with negative numbers
         pass
 
 
