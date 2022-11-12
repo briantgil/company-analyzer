@@ -3,21 +3,24 @@ from statistics import mean
 
 class CompanyAnalyzer():
 
-    def __init__(self, market_cap=0, outstanding_shares=0, beta=0.0, pretax_imcome=0, income_tax=0, total_debt=0, interest_ex=0):
+    def __init__(self, mcap=0, oshares=0, beta=0.0, ptimcome=0, tax=0, tdebt=0, intex=0, afcfgr=0, is_afcfgr_given=False):
 
         self._stock_price: float = 0.0
         self._dividend_per_share: float = 0.0
         self._dividend_growth_rate: float = 0.0
 
-        self._market_cap: int = market_cap  #reduced to match in same terms as debt
-        self._outstanding_shares: int = outstanding_shares
+        self._market_cap: int = mcap  #reduced to match in same terms as debt
+        self._outstanding_shares: int = oshares
         self._beta: float = beta
         
-        self._pretax_income: int = pretax_imcome
-        self._income_tax: int = income_tax  #if tax<0, tax rate=0%
+        self._pretax_income: int = ptimcome
+        self._income_tax: int = tax  #if tax<0, tax rate=0%
         
-        self._total_debt: int = total_debt  #use total debt and total assets for debt ratio; use total debt for WACC
-        self._interest_ex: int = interest_ex  #if interest income – interest expense > 0, then nii
+        self._total_debt: int = tdebt  #use total debt and total assets for debt ratio; use total debt for WACC
+        self._interest_ex: int = intex  #if interest income – interest expense > 0, then nii
+
+        self._avg_fcf_growth_rate = afcfgr          #accept a different avg fcf growth rate
+        self._is_afcfgr_given = is_afcfgr_given        
 
         self._risk_free_rate: float = 0.04181  #ust 5yr; source: cnbc; match bond term with investment duration
         self._market_rate: float  = 0.0796  #s&p 500; source: investopedia
@@ -34,23 +37,24 @@ class CompanyAnalyzer():
         self._discount_factors: list[float] = []  
         self._discounted_fcf: list[float] = []  
 
-        self._other_metric: list[int] = [] 
+        self._is_data_loaded = False  #TODO: make file in controller, or separate module using web scraping or rest api
 
 
     def __str__(self) -> str:
+        #TODO: show 1yr, 2yr, 3yr cumulative growth and average change
+        #TODO: show compare present value with market price
+        #TODO: use color        
         pass
 
 
     def LoadCompanyFromTextFile(self, fd: str) -> bool:
+        """load data from text file in a specific format"""
         pass
+        
 
-
-    def PrintCompanyMetrics(self) -> str:
-        #TODO: show 1yr, 2yr, 3yr cumulative growth and average change
-        #TODO: show compare present value with market price
-        #TODO: accept a different avg fcf growth rate
-        #TODO: how to calculate yoy growth with negative numbers
-        pass
+    def PrintToConsole(self) -> None:
+        """print company analysis to console"""
+        print(self)
 
 
     def _TaxRate(self) -> float:
@@ -154,6 +158,7 @@ class CompanyAnalyzer():
 
     def _PeriodOverPeriodGrowthRate(self, n: int, m: int) -> float:
         """calculate QoQ or YoY growth rate"""
+        #TODO: if comparing -/+ or +/-, yoy=0
         if not type(m) is int: raise TypeError("arg 1 must be integer")
         if not type(n) is int: raise TypeError("arg 2 must be integer")
         if m == 0: raise ZeroDivisionError("division by zero")
@@ -168,6 +173,11 @@ class CompanyAnalyzer():
         if len(nums) == 0: raise ValueError("list must have at least one value")
 
         return round(mean(nums), 4)
+
+
+    def CumulativeGrowthRates(self):
+        """calculate cumulative growth rates for last 1yr, 2yr, etc"""
+        pass
 
 
 
