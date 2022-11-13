@@ -35,6 +35,7 @@ try:
                 value = float(value.replace(",", ""))
             elif field == mandatory_fields[7]:  #== 'free_cash_flows'
                 lst = value.split("\t")
+                if len(lst) == 0: raise ValueError("missing value: free cash flows")
                 value = [ int(x.replace(",", "")) for x in lst ]
             elif field == mandatory_fields[8]:  #=='avg_fcf_growth_rate'   
                 if value != None and value != '':
