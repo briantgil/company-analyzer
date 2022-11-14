@@ -3,7 +3,7 @@ from statistics import mean
 
 class CompanyAnalyzer():
 
-    def __init__(self, mcap=0, oshares=0, beta=0.0, ptimcome=0, tax=0, tdebt=0, intex=0, afcfgr=0, is_afcfgr_given=False):
+    def __init__(self, mcap=0, oshares=0, beta=0.0, ptimcome=0, tax=0, tdebt=0, intex=0, fcf=[], afcfgr=0, is_afcfgr_given=False):
         self._risk_free_rate: float = 0.04181  #ust 5yr; source: cnbc; match bond term with investment duration
         self._market_rate: float  = 0.0796  #s&p 500; source: investopedia
         self._terminal_growth_rate: float = 0.0293  #gdp; source: world bank        
@@ -22,11 +22,11 @@ class CompanyAnalyzer():
         self._income_tax: int = tax  #if tax<0, tax rate=0%
         self._total_debt: int = tdebt  #use total debt and total assets for debt ratio; use total debt for WACC
         self._interest_ex: int = intex  #if interest income – interest expense > 0, then nii
-        
+        #newest -> oldest values
+        self._free_cash_flows: list[int] = fcf  #fcf=operating cash flow-capex (purchases of premises, equipment, and leased equipment)
+
         self._avg_fcf_growth_rate: float = afcfgr          #accept a different avg fcf growth rate
         self._is_afcfgr_given: bool = is_afcfgr_given        
-        #newest -> oldest values
-        self._free_cash_flows: list[int] = []  #fcf=operating cash flow-capex (purchases of premises, equipment, and leased equipment)
 
         self._is_data_loaded = False   #TODO: prevent operations if data is not loaded
         
@@ -189,8 +189,28 @@ class CompanyAnalyzer():
 
 
 if __name__ == '__main__':
-    pass
+    market_cap = 721609664
+    outstanding_shares = 3157753
+    beta = 2.11
+    pretax_income = 6343000
+    income_tax = 699000
+    total_debt = 33723000	
+    interest_ex = 371000
+    free_cash_flows = [3515000, 2786000, 1078000, -3000, -3476000]
+
+    tsla = CompanyAnalyzer(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
 
     #TODO: unit tests
 
 
+"""
+market_cap:721,609,664
+outstanding_shares:3,157,753
+beta:2.11
+pretax_income:6,343,000
+income_tax:699,000
+total_debt:33,723,000	
+interest_ex:371,000
+free_cash_flows:3,515,000	2,786,000	1,078,000	-3,000	-3,476,000
+avg_fcf_growth_rate:
+"""
