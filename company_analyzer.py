@@ -37,6 +37,7 @@ class CompanyAnalyzer():
         #TODO: show 1yr, 2yr, 3yr cumulative growth and average change
         #TODO: show compare present value with market price
         #TODO: use color        
+        #FIXME: rounding issue
         pass
 
 
@@ -60,10 +61,12 @@ class CompanyAnalyzer():
     def Discounted_FCF(self) -> list[float]:
         """calculate discounted free cash flows"""
         dfcf = []
-        df = self.Discount_Factors()
         ffcf = self.Future_FCF()
+        tv = self.PGM_Terminal_Value()  #XXX: method also gets future fcf
+        df = self.Discount_Factors()
         for i in range(len(ffcf)):
             dfcf.append(ffcf[i] * df[i])
+        dfcf.append(tv * df[-1])
         return dfcf
 
 
@@ -73,14 +76,12 @@ class CompanyAnalyzer():
         dr = self.WACC_Discount_Rate()
         for i in range(self._investment_duration_years): 
             df.append(1/((1+dr)**(i+1)))
-        df.append(1/((1+dr)**(self._investment_duration_years)))
         return df
 
 
     def Future_FCF(self) -> list[float]:
         """calculate future free cash flows"""
         ffcf = []
-        tv = self.PGM_Terminal_Value()
         gr = None
         avg_gr = 0
 
@@ -93,19 +94,19 @@ class CompanyAnalyzer():
         fcf_prev = self._free_cash_flows[0] * self._in_xds_of_dollars
         fcf_next = 0
         for i in range(self._investment_duration_years):
-            fcf_next = fcf_prev * (1+avg_gr)
+            fcf_next = fcf_prev * (1+avg_gr) * (i+1)
             ffcf.append(fcf_next)
             fcf_prev = fcf_next
-        ffcf.append(tv)
         return ffcf
 
 
     def PGM_Terminal_Value(self) -> float:
         """calculate company's terminal value using perpetual growth model (PGM)"""
-        fcf = self._free_cash_flows[0]  #last forecast year; newest -> oldest values
+        fcf = self.Future_FCF()[-1]  #last forecast year; newest -> oldest values
         g = self._terminal_growth_rate
         d = self.WACC_Discount_Rate()
-        return round(fcf * (1+g) / (d-g), 2)
+        #return round(fcf * (1+g) / (d-g), 2)
+        return fcf * (1+g) / (d-g)
 
 
     def WACC_Discount_Rate(self) -> float:
@@ -114,13 +115,15 @@ class CompanyAnalyzer():
         re = self.CAPM_Cost_Of_Equity()
         rd = self.Cost_Of_Debt()
         tc = self.Tax_Rate()
-        return round( (self._market_cap / v * re) + (self._total_debt / v * rd * (1-tc)) , 4)
+        #return round( (self._market_cap / v * re) + (self._total_debt / v * rd * (1-tc)) , 4)
+        return (self._market_cap / v * re) + (self._total_debt / v * rd * (1-tc))
 
 
     def CAPM_Cost_Of_Equity(self) -> float:
         """calculate cost of equity using capital asset pricing model (CAPM)"""
         #mr-rfr=equity risk premium
-        return round(self._risk_free_rate + self._beta * (self._market_rate - self._risk_free_rate), 4)  
+        #return round(self._risk_free_rate + self._beta * (self._market_rate - self._risk_free_rate), 4)
+        return self._risk_free_rate + self._beta * (self._market_rate - self._risk_free_rate) 
 
 
     def DCM_Cost_Of_Equity(self) -> float:
@@ -146,7 +149,8 @@ class CompanyAnalyzer():
         if not type(d) is int: raise TypeError("arg 2 must be integer")
 
         if n <= 0 or d <= 0: return 0.0
-        return round(n / d, 4) 
+        #return round(n / d, 4)
+        return n / d 
 
 
     def Growth_Rates(self, nums: list[int]) -> list[float]:
@@ -171,7 +175,8 @@ class CompanyAnalyzer():
         #XXX: if comparing -/+ or +/-, PoP=0
         #if m < 0: return round((n - m) / abs(m), 4)
         if m < 0 or n < 0: return round(0, 4)
-        return round((n - m) / m, 4)
+        #return round((n - m) / m, 4)
+        return (n - m) / m
 
 
     def Average_Growth_Rate(self, rates: list[float]) -> float:
@@ -179,7 +184,8 @@ class CompanyAnalyzer():
         if not type(rates) is list: raise TypeError("arg 1 must be list")
         if len(rates) == 0: raise ValueError("list must have at least one value")
 
-        return round(mean(rates), 4)
+        #return round(mean(rates), 4)
+        return mean(rates)
 
 
     def Cumulative_Growth_Rates(self) -> list[float]:
@@ -199,6 +205,27 @@ if __name__ == '__main__':
     free_cash_flows = [3515000, 2786000, 1078000, -3000, -3476000]
 
     tsla = CompanyAnalyzer(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
+    print(f"fcf={tsla._free_cash_flows}")
+    gr = tsla.Growth_Rates(tsla._free_cash_flows)
+    print(f"gr={gr}")
+    avg_gr = tsla.Average_Growth_Rate(gr)
+    print(f"avg gr={avg_gr}")
+    print(f"coe={tsla.CAPM_Cost_Of_Equity()}")
+    print(f"cod={tsla.Cost_Of_Debt()}")
+    print(f"tax rate={tsla.Tax_Rate()}")
+    wacc = tsla.WACC_Discount_Rate()
+    print(f"wacc={wacc}")
+    tv = tsla.PGM_Terminal_Value()
+    print(f"tv={tv}")
+    ffcf = tsla.Future_FCF()
+    print(f"ffcf={ffcf}\n")
+    df = tsla.Discount_Factors()
+    print(f"df={df}\n")
+    dcf = tsla.Discounted_FCF()
+    print(f"dcf={dcf}\n")
+    fv, mos = tsla.Fair_Value()
+    print(f"fv={fv}")
+    print(f"mos={mos}")
 
     #TODO: unit tests
 
