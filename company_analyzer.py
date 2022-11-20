@@ -37,7 +37,7 @@ class CompanyAnalyzer():
         #TODO: show 1yr, 2yr, 3yr cumulative growth and average change
         #TODO: show compare present value with market price
         #TODO: use color        
-        #FIXME: rounding issue
+        #FIXME: rounding issue; from decimal import *
         pass
 
 
@@ -55,7 +55,7 @@ class CompanyAnalyzer():
         """calculate fair value of stock price after margin of safety"""
         fair_value = sum(self.Discounted_FCF()) / self._outstanding_shares * self._in_xds_of_dollars
         value_after_magin_of_safety = fair_value * self._margin_of_safety
-        return fair_value, value_after_magin_of_safety
+        return round(fair_value, 2), round(value_after_magin_of_safety, 2)
 
 
     def Discounted_FCF(self) -> list[float]:
