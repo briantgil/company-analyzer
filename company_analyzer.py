@@ -247,8 +247,9 @@ if __name__ == '__main__':
     income_tax = 699000
     total_debt = 33723000	
     interest_ex = 371000
-    free_cash_flows = [3515000, 2786000, 1078000, -3000, -3476000]
-    #test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
+    #free_cash_flows = [3515000, 2786000, 1078000, -3000, -3476000]
+    free_cash_flows = [8903000, 3483000, 2701000, 968000, -3476000]
+    test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
 
     market_cap = 29449504
     outstanding_shares = 172613
@@ -258,7 +259,7 @@ if __name__ == '__main__':
     total_debt = 3532415
     interest_ex = 114006
     free_cash_flows = [2565746, 616898, 2179506, 1992176, 2702969]
-    test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
+    #test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
 
     #TODO: unit tests (CSCO, META)
 
