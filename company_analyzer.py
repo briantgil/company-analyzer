@@ -2,13 +2,23 @@ from statistics import mean
 
 
 class CompanyAnalyzer():
+    """
+    Discounted Cash Flow (DCF) model
+    references:
+    https://www.investopedia.com/terms/d/dcf.asp#:~:text=Discounted%20cash%20flow%20(DCF)%20refers,will%20generate%20in%20the%20future.
+    https://www.investopedia.com/terms/w/wacc.asp
+    https://www.investopedia.com/terms/c/costofequity.asp
+    https://www.investopedia.com/terms/c/capm.asp
+    https://www.investopedia.com/terms/t/terminalvalue.asp
+    https://docs.python.org/3/library/decimal.html#module-decimal
+    """
 
     def __init__(self, mcap=0, oshares=0, beta=0.0, ptimcome=0, tax=0, tdebt=0, intex=0, fcf=[], afcfgr=0, is_afcfgr_given=False):
         self._risk_free_rate: float = 0.04181  #ust 5yr; source: cnbc; match bond term with investment duration
         self._market_rate: float  = 0.0796  #s&p 500; source: investopedia
         self._terminal_growth_rate: float = 0.0293  #gdp; source: world bank        
         self._margin_of_safety: float  = 0.30
-        self._in_xds_of_dollars: int = 1000
+        self._in_xds_of_dollars: int = 1000  #in terms of thousands
         self._investment_duration_years = 5
 
         self._stock_price: float = 0.0
@@ -16,14 +26,14 @@ class CompanyAnalyzer():
         self._dividend_growth_rate: float = 0.0
 
         self._market_cap: int = mcap  #reduced to match in same terms as debt
-        self._outstanding_shares: int = oshares
+        self._outstanding_shares: int = oshares  #reduced terms
         self._beta: float = beta
-        self._pretax_income: int = ptimcome
-        self._income_tax: int = tax  #if tax<0, tax rate=0%
-        self._total_debt: int = tdebt  #use total debt and total assets for debt ratio; use total debt for WACC
-        self._interest_ex: int = intex  #if interest income – interest expense > 0, then nii
+        self._pretax_income: int = ptimcome  #reduced
+        self._income_tax: int = tax  #if tax<0, tax rate=0%; #reduced
+        self._total_debt: int = tdebt  #use total debt and total assets for debt ratio; use total debt for WACC; #reduced
+        self._interest_ex: int = intex  #if interest income – interest expense > 0, then nii; #reduced
         #newest -> oldest values
-        self._free_cash_flows: list[int] = fcf  #fcf=operating cash flow-capex (purchases of premises, equipment, and leased equipment)
+        self._free_cash_flows: list[int] = fcf  #fcf=operating cash flow-capex (purchases of premises, equipment, and leased equipment); #reduced
 
         self._avg_fcf_growth_rate: float = afcfgr          #accept a different avg fcf growth rate
         self._is_afcfgr_given: bool = is_afcfgr_given        
@@ -37,7 +47,7 @@ class CompanyAnalyzer():
         #TODO: show 1yr, 2yr, 3yr cumulative growth and average change
         #TODO: show compare present value with market price
         #TODO: use color        
-        #FIXME: rounding issue; from decimal import *
+        #FIXME: rounding issue; use: from decimal import *
         pass
 
 
@@ -53,8 +63,8 @@ class CompanyAnalyzer():
 
     def Fair_Value(self) -> tuple[float]:
         """calculate fair value of stock price after margin of safety"""
-        fair_value = sum(self.Discounted_FCF()) / self._outstanding_shares * self._in_xds_of_dollars
-        value_after_magin_of_safety = fair_value * self._margin_of_safety
+        fair_value = sum(self.Discounted_FCF()) / (self._outstanding_shares * self._in_xds_of_dollars)
+        value_after_magin_of_safety = fair_value * (1 - self._margin_of_safety)
         return round(fair_value, 2), round(value_after_magin_of_safety, 2)
 
 
@@ -94,36 +104,44 @@ class CompanyAnalyzer():
         fcf_prev = self._free_cash_flows[0] * self._in_xds_of_dollars
         fcf_next = 0
         for i in range(self._investment_duration_years):
-            fcf_next = fcf_prev * (1+avg_gr) * (i+1)
+            fcf_next = fcf_prev * (1+avg_gr)
             ffcf.append(fcf_next)
             fcf_prev = fcf_next
         return ffcf
 
 
     def PGM_Terminal_Value(self) -> float:
-        """calculate company's terminal value using perpetual growth model (PGM)"""
+        """calculate company's terminal value using perpetual growth model (PGM); perpetuity method"""
         fcf = self.Future_FCF()[-1]  #last forecast year; newest -> oldest values
         g = self._terminal_growth_rate
         d = self.WACC_Discount_Rate()
         #return round(fcf * (1+g) / (d-g), 2)
-        return fcf * (1+g) / (d-g)
+        return (fcf * (1+g)) / (d-g)
+
+
+    def EM_Terminal_Value(self) -> float:
+        """calculate company's terminal value using exit mutiple method"""
+        raise NotImplementedError("EM is not implemented, must use PGM")
+        return None
 
 
     def WACC_Discount_Rate(self) -> float:
-        """calculate required rate of return (RRR) using Weighted Average Cost of Capital (WACC)"""
-        v = self._market_cap + self._total_debt
+        """calculate required rate of return (RRR), or discount rate using Weighted Average Cost of Capital (WACC)"""
+        e = self._market_cap
+        d = self._total_debt
+        v = e + d
         re = self.CAPM_Cost_Of_Equity()
         rd = self.Cost_Of_Debt()
         tc = self.Tax_Rate()
         #return round( (self._market_cap / v * re) + (self._total_debt / v * rd * (1-tc)) , 4)
-        return (self._market_cap / v * re) + (self._total_debt / v * rd * (1-tc))
+        return ((e / v) * re) + ((d / v) * rd * (1-tc))
 
 
     def CAPM_Cost_Of_Equity(self) -> float:
         """calculate cost of equity using capital asset pricing model (CAPM)"""
         #mr-rfr=equity risk premium
         #return round(self._risk_free_rate + self._beta * (self._market_rate - self._risk_free_rate), 4)
-        return self._risk_free_rate + self._beta * (self._market_rate - self._risk_free_rate) 
+        return self._risk_free_rate + (self._beta * (self._market_rate - self._risk_free_rate))
 
 
     def DCM_Cost_Of_Equity(self) -> float:
@@ -162,6 +180,8 @@ class CompanyAnalyzer():
         #runs n-1 times
         gr: list[float] = []
         for i in range(len(nums)-1, 0, -1):
+            #if i < 0 or i-1 < 0:
+                #raise ValueError("compare list must not have any negative (-) numbers")
             gr.append(self._Period_Over_Period_Growth_Rate(nums[i-1], nums[i]))
         return gr
 
@@ -174,7 +194,7 @@ class CompanyAnalyzer():
 
         #XXX: if comparing -/+ or +/-, PoP=0
         #if m < 0: return round((n - m) / abs(m), 4)
-        if m < 0 or n < 0: return round(0, 4)
+        if m < 0 or n < 0: return 0.0
         #return round((n - m) / m, 4)
         return (n - m) / m
 
@@ -195,7 +215,32 @@ class CompanyAnalyzer():
 
 
 if __name__ == '__main__':
-    market_cap = 721609664
+
+    def test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows):
+        c = CompanyAnalyzer(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
+        print(f"fcf={c._free_cash_flows}")
+        gr = c.Growth_Rates(c._free_cash_flows)
+        print(f"gr={gr}")
+        avg_gr = c.Average_Growth_Rate(gr)
+        print(f"avg gr={avg_gr}")
+        print(f"coe={c.CAPM_Cost_Of_Equity()}")
+        print(f"cod={c.Cost_Of_Debt()}")
+        print(f"tax rate={c.Tax_Rate()}")
+        wacc = c.WACC_Discount_Rate()
+        print(f"wacc={wacc}")
+        tv = c.PGM_Terminal_Value()
+        print(f"tv={tv}")
+        ffcf = c.Future_FCF()
+        print(f"ffcf={ffcf}\n")
+        df = c.Discount_Factors()
+        print(f"df={df}\n")
+        dcf = c.Discounted_FCF()
+        print(f"dcf={dcf}\n")
+        fv, mos = c.Fair_Value()
+        print(f"fv={fv}")
+        print(f"mos={mos}")
+
+    market_cap = 568995520
     outstanding_shares = 3157753
     beta = 2.11
     pretax_income = 6343000
@@ -203,31 +248,19 @@ if __name__ == '__main__':
     total_debt = 33723000	
     interest_ex = 371000
     free_cash_flows = [3515000, 2786000, 1078000, -3000, -3476000]
+    #test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
 
-    tsla = CompanyAnalyzer(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
-    print(f"fcf={tsla._free_cash_flows}")
-    gr = tsla.Growth_Rates(tsla._free_cash_flows)
-    print(f"gr={gr}")
-    avg_gr = tsla.Average_Growth_Rate(gr)
-    print(f"avg gr={avg_gr}")
-    print(f"coe={tsla.CAPM_Cost_Of_Equity()}")
-    print(f"cod={tsla.Cost_Of_Debt()}")
-    print(f"tax rate={tsla.Tax_Rate()}")
-    wacc = tsla.WACC_Discount_Rate()
-    print(f"wacc={wacc}")
-    tv = tsla.PGM_Terminal_Value()
-    print(f"tv={tv}")
-    ffcf = tsla.Future_FCF()
-    print(f"ffcf={ffcf}\n")
-    df = tsla.Discount_Factors()
-    print(f"df={df}\n")
-    dcf = tsla.Discounted_FCF()
-    print(f"dcf={dcf}\n")
-    fv, mos = tsla.Fair_Value()
-    print(f"fv={fv}")
-    print(f"mos={mos}")
+    market_cap = 29449504
+    outstanding_shares = 172613
+    beta = 0.79
+    pretax_income = 2445149
+    income_tax = 596403
+    total_debt = 3532415
+    interest_ex = 114006
+    free_cash_flows = [2565746, 616898, 2179506, 1992176, 2702969]
+    test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
 
-    #TODO: unit tests
+    #TODO: unit tests (CSCO, META)
 
 
 """
