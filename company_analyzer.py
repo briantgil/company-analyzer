@@ -1,7 +1,7 @@
 from statistics import mean
 
 
-class CompanyAnalyzer():
+class DiscountedCashFlowModel():
     """
     Discounted Cash Flow (DCF) model
     references:
@@ -38,9 +38,7 @@ class CompanyAnalyzer():
         self._avg_fcf_growth_rate: float = afcfgr          #accept a different avg fcf growth rate
         #self._is_afcfgr_given: bool = is_afcfgr_given        
 
-        self._is_data_loaded = False   #TODO: prevent operations if data is not loaded
-        
-        #TODO: validate parameters
+        #TODO: validate parameters; prevent operations if data is not loaded
         #TODO: generate file in controller, or separate module by using web scraping or rest api
 
 
@@ -52,14 +50,26 @@ class CompanyAnalyzer():
         pass
 
 
-    def LoadCompanyFromTextFile(self, fd: str) -> bool:
-        """load data from text file in a specific format"""
-        pass
-        
+    def Check_Data_Load(self) -> None:
+        """test if data loaded on init"""
+        if 'this': self._is_data_loaded = False
+        else: self._is_data_loaded = True
 
-    def PrintToConsole(self) -> None:
+
+    def Load_Company_From_Text_File(self, fd: str) -> None:
+        """load data from text file in a specific format"""
+        try:
+            self._is_data_loaded = True
+        except Exception as e:
+            self._is_data_loaded = False
+       
+
+    def Print_To_Console(self) -> None:
         """print company analysis to console"""
-        print(self)
+        format_str = ""
+        if 'this': format_str += ""
+        else: format_str += "" 
+        print(format_str)
 
 
     def Fair_Value(self) -> tuple[float]:
@@ -153,13 +163,13 @@ class CompanyAnalyzer():
 
 
     def Cost_Of_Debt(self) -> float:
-            """calculate effective interest rate"""
-            return self._Normalize_Rate(self._interest_ex, self._total_debt)
+        """calculate effective interest rate"""
+        return self._Normalize_Rate(self._interest_ex, self._total_debt)
 
 
     def Tax_Rate(self) -> float:
-            """calculate effective corporate tax rate"""
-            return self._Normalize_Rate(self._income_tax, self._pretax_income)
+        """calculate effective corporate tax rate"""
+        return self._Normalize_Rate(self._income_tax, self._pretax_income)
 
 
     def _Normalize_Rate(self, n: int, d: int) -> float:    
@@ -218,7 +228,7 @@ class CompanyAnalyzer():
 if __name__ == '__main__':
 
     def test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows):
-        c = CompanyAnalyzer(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
+        c = DiscountedCashFlowModel(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
         print(f"fcf={c._free_cash_flows}")
         gr = c.Growth_Rates(c._free_cash_flows)
         print(f"gr={gr}")
