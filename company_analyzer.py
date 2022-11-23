@@ -13,7 +13,7 @@ class CompanyAnalyzer():
     https://docs.python.org/3/library/decimal.html#module-decimal
     """
 
-    def __init__(self, mcap=0, oshares=0, beta=0.0, ptimcome=0, tax=0, tdebt=0, intex=0, fcf=[], afcfgr=0, is_afcfgr_given=False):
+    def __init__(self, mcap=0, oshares=0, beta=0.0, ptimcome=0, tax=0, tdebt=0, intex=0, fcf=[], afcfgr=0):
         self._risk_free_rate: float = 0.04181  #ust 5yr; source: cnbc; match bond term with investment duration
         self._market_rate: float  = 0.0796  #s&p 500; source: investopedia
         self._terminal_growth_rate: float = 0.0293  #gdp; source: world bank        
@@ -36,10 +36,11 @@ class CompanyAnalyzer():
         self._free_cash_flows: list[int] = fcf  #fcf=operating cash flow-capex (purchases of premises, equipment, and leased equipment); #reduced
 
         self._avg_fcf_growth_rate: float = afcfgr          #accept a different avg fcf growth rate
-        self._is_afcfgr_given: bool = is_afcfgr_given        
+        #self._is_afcfgr_given: bool = is_afcfgr_given        
 
         self._is_data_loaded = False   #TODO: prevent operations if data is not loaded
         
+        #TODO: validate parameters
         #TODO: generate file in controller, or separate module by using web scraping or rest api
 
 
@@ -95,7 +96,7 @@ class CompanyAnalyzer():
         gr = None
         avg_gr = 0
 
-        if self._is_afcfgr_given:
+        if self._avg_fcf_growth_rate != 0:
             avg_gr = self._avg_fcf_growth_rate
         else:
             gr = self.Growth_Rates(self._free_cash_flows)
@@ -259,6 +260,16 @@ if __name__ == '__main__':
     total_debt = 3532415
     interest_ex = 114006
     free_cash_flows = [2565746, 616898, 2179506, 1992176, 2702969]
+    #test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
+
+    market_cap = 0
+    outstanding_shares = 0
+    beta = 0.0
+    pretax_income = 0
+    income_tax = 0
+    total_debt = 0
+    interest_ex = 0
+    free_cash_flows = []
     #test(market_cap, outstanding_shares, beta, pretax_income, income_tax, total_debt, interest_ex, free_cash_flows)
 
     #TODO: unit tests (CSCO, META)
